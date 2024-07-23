@@ -62,7 +62,7 @@ Load_Operator_Deps() {
                 exit 1
               fi
             else
-              echo "WARNING: Creating ${operator_name} service-account had a problem, please check"
+              echo "WARNING: Applying ${operator_name} service-account had a problem, please check"
               exit 1
             fi
           else
