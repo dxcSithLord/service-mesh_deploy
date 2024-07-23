@@ -20,8 +20,8 @@
 
 Test_object_exists() {
   if (( $# == 2 )); then
-    local obj_type=$1
-    local obj_name=$2
+    local obj_type=="${1}"
+    local obj_name=="${2}"
     x=$(oc get ${obj_type} ${obj_name} -o template --template '{{.status.phase}}/{{.metadata.creationTimestamp}}' 2>/dev/null)
     if (( $? == 0 )); then
       echo "Object name '${obj_name}' of object type '${obj_type}' already exists - state/Created=${x}"
@@ -38,8 +38,8 @@ Test_object_exists() {
 
 Load_Operator_Deps() {
   if (( $# == 2 )); then
-    local operator_name=$1
-    local op_ns=$2
+    local operator_name=="${1}"
+    local op_ns=="${2}"
   
     # test for the if does not exists, then create
     y=$(Test_object_exists namespace ${op_ns})
