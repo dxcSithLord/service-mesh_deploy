@@ -61,14 +61,15 @@ Load_Operator_Deps() {
             exit 1
           fi
         else
-          echo "WARNING: Creating openshift-operators-redhat had a problem, please check"
+          echo "WARNING: Creating ${operator_name} had a problem, please check"
           exit 1
         fi
     255 )   
       echo "already there" ;;
         # switch to the openshift-operators-redhat project namespace
         oc project ${op_ns}
-        y=$(Test_object_exists ServiceAccount )
+        #  work out the values to pass from the yaml file - needs yq installed.
+        y=$(Test_object_exists ServiceAccount XXXXX_FROM_YAML_XXXX )
         if (( $? == 0 )); then
           oc apply -f "${operator_name}_service-account.yaml"
           if (( $? == 0 )); then
@@ -100,6 +101,13 @@ Load_Operator_Deps() {
  
 # else
   
+load_operator_name elasticsearch-operator openshift-operators-redhat
+Load_operator_name jaeger openshift-distributed-tracing
+
+
+##################
+### THE FOLLOWING CODE SHOULD BE REPLACED WITH THE LOAD_OPERATOR_NAME FUNCTION ABOVE - TO CHECK
+##################
 
 
 y=$(Test_object_exists namespace openshift-distributed-tracing)
