@@ -9,52 +9,93 @@
 # Date   : 2024-July-19
 
 
-# Functions
+#################
+# Functions     #
+#################
 
 # Description: Test that an openshift object "name" of "type" exists and return
 # 0 for does not exist
 # 255 for object exists - also shows object status.phase
 # 99 for incorrect number of arguments
+# ------------------------------------------------------
 Test_object_exists() {
   if (( $# == 2 )); then
     local obj_type=$1
     local obj_name=$2
-    x=$(oc get ${obj_type} ${obj_name} -o template --template '{{.status.phase}}' 2>/dev/null)
+    x=$(oc get ${obj_type} ${obj_name} -o template --template '{{.status.phase}}/{{.metadata.creationTimestamp}}' 2>/dev/null)
     if (( $? == 0 )); then
-      echo "${obj_type} ${obj_name} already exists - state=${x}"
+      echo "Object name '${obj_name}' of object type '${obj_type}' already exists - state/Created=${x}"
       return 255
     else
+      echo "Object name '${obj_name}' of object type '${obj_type}'does not exist in '$(oc project -q)'"
       return 0
     fi
   else
+    echo "Incorrect number of arguments, object_type and object_name expected"
     return 99
   fi
 }
-
-
 
 y=$(Test_object_exists namespace openshift-operators-redhat)
 # if does not exists, then create
 case $? in 
     0 )   
-    echo "Creating new objects" ;;
-    oc create ns openshift-operators-redhat
-    if (( $? == 0 )); then
-      oc apply -f elasticsearch-operator_service-account.yaml
+      echo "Creating new objects" ;;
+      oc create ns openshift-operators-redhat
       if (( $? == 0 )); then
-        oc create -f elasticsearch-operator_OperatorGroup.yaml
-
-
-
-        oc apply -f elasticsearch-operator_Subscription.yaml
+        oc apply -f elasticsearch-operator_service-account.yaml
+        if (( $? == 0 )); then
+          oc create -f elasticsearch-operator_OperatorGroup.yaml
+          if (( $? == 0 )); then
+            oc apply -f elasticsearch-operator_Subscription.yaml
+          else
+            echo "WARNING: elasticsearch-operator Subscription had a problem, please check"
+            exit 1
+          fi
+        else
+          echo "WARNING: elasticsearch-operator OperatorGroup had a problem, please check"
+          exit 1
+        fi
+      else
+        echo "WARNING: Creating openshift-operators-redhat had a problem, please check"
+        exit 1
+      fi
   255 )   
     echo "already there" ;;
+      # switch to the openshift-operators-redhat project namespace
+      oc project openshift-operators-redhat
+      y=$(Test_object_exists ServiceAccount openshift-distributed-tracing)
+      if (( $? == 0 )); then
+        oc apply -f elasticsearch-operator_service-account.yaml
+        if (( $? == 0 )); then
+          # get the number of existing OperatorGroups
+          opgroups=$(oc get OperatorGroup --no-headers -o json )
+          if (( $? == 0 && $(echo $opgroups | jq '.items | length') == 0 )); then
+            # if none found and OK to create
+            oc create -f elasticsearch-operator_OperatorGroup.yaml
+            if (( $? == 0 )); then
+              oc apply -f elasticsearch-operator_Subscription.yaml
+            else
+              echo "WARNING: elasticsearch-operator Subscription had a problem, please check"
+              exit 1
+            fi
+          else
+            # Operator groups exist, so list them and exit
+            echo "Operator groups exist - please verify openshift-operators-redhat-* exists"
+            echo "$opgroups" | jq '.items'
+        else
+          echo "WARNING: elasticsearch-operator OperatorGroup had a problem, please check"
+          exit 1
+        fi
+
    99 )   
     echo "wrong args" ;;
 esac
 
  
 # else
+  
+
 
 y=$(Test_object_exists namespace openshift-distributed-tracing)
 # if does not exists, then create
