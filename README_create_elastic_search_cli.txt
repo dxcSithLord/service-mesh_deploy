@@ -37,46 +37,19 @@ Test_object_exists() {
 }
 
 Load_Operator_Deps() {
-  local operator_name=$1
-  local op_ns=$2
-
-  # test for the if does not exists, then create
-  y=$(Test_object_exists namespace ${op_ns})
-  case $? in 
-      0 )   
-        echo "Creating new objects" ;;
-        oc create ns ${op_ns}
-        if (( $? == 0 )); then
-          oc apply -f "${operator_name}_service-account.yaml"
+  if (( $# == 2 )); then
+    local operator_name=$1
+    local op_ns=$2
+  
+    # test for the if does not exists, then create
+    y=$(Test_object_exists namespace ${op_ns})
+    case $? in 
+        0 )   
+          echo "Creating new objects" ;;
+          oc create ns ${op_ns}
           if (( $? == 0 )); then
-            oc create -f "${operator_name}_OperatorGroup.yaml"
+            oc apply -f "${operator_name}_service-account.yaml"
             if (( $? == 0 )); then
-              oc apply -f "${operator_name}_Subscription.yaml"
-            else
-              echo "WARNING: ${operator_name} Subscription had a problem, please check"
-              exit 1
-            fi
-          else
-            echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
-            exit 1
-          fi
-        else
-          echo "WARNING: Creating ${operator_name} had a problem, please check"
-          exit 1
-        fi
-    255 )   
-      echo "already there" ;;
-        # switch to the openshift-operators-redhat project namespace
-        oc project ${op_ns}
-        #  work out the values to pass from the yaml file - needs yq installed.
-        y=$(Test_object_exists ServiceAccount XXXXX_FROM_YAML_XXXX )
-        if (( $? == 0 )); then
-          oc apply -f "${operator_name}_service-account.yaml"
-          if (( $? == 0 )); then
-            # get the number of existing OperatorGroups
-            opgroups=$(oc get OperatorGroup --no-headers -o json )
-            if (( $? == 0 && $(echo $opgroups | jq '.items | length') == 0 )); then
-              # if none found and OK to create
               oc create -f "${operator_name}_OperatorGroup.yaml"
               if (( $? == 0 )); then
                 oc apply -f "${operator_name}_Subscription.yaml"
@@ -85,24 +58,56 @@ Load_Operator_Deps() {
                 exit 1
               fi
             else
-              # Operator groups exist, so list them and exit
-              echo "Operator groups exist - please verify openshift-operators-redhat-* exists"
-              echo "$opgroups" | jq '.items'
+              echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
+              exit 1
+            fi
           else
-            echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
+            echo "WARNING: Creating ${operator_name} had a problem, please check"
             exit 1
           fi
-  
-     99 )   
-      echo "wrong args" ;;
-        exit 1
-  esac
+      255 )   
+        echo "already there" ;;
+          # switch to the openshift-operators-redhat project namespace
+          oc project ${op_ns}
+          #  work out the values to pass from the yaml file - needs yq installed.
+          y=$(Test_object_exists ServiceAccount XXXXX_FROM_YAML_XXXX )
+          if (( $? == 0 )); then
+            oc apply -f "${operator_name}_service-account.yaml"
+            if (( $? == 0 )); then
+              # get the number of existing OperatorGroups
+              opgroups=$(oc get OperatorGroup --no-headers -o json )
+              if (( $? == 0 && $(echo $opgroups | jq '.items | length') == 0 )); then
+                # if none found and OK to create
+                oc create -f "${operator_name}_OperatorGroup.yaml"
+                if (( $? == 0 )); then
+                  oc apply -f "${operator_name}_Subscription.yaml"
+                else
+                  echo "WARNING: ${operator_name} Subscription had a problem, please check"
+                  exit 1
+                fi
+              else
+                # Operator groups exist, so list them and exit
+                echo "Operator groups exist - please verify openshift-operators-redhat-* exists"
+                echo "$opgroups" | jq '.items'
+            else
+              echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
+              exit 1
+            fi
+    
+       99 )   
+        echo "wrong args" ;;
+          exit 1
+    esac
+  else
+    echo "Incorrect number of arguments, operator_name and namespace expected"
+    return 99
+  fi
 }  
  
 # else
   
-load_operator_name elasticsearch-operator openshift-operators-redhat
-Load_operator_name jaeger openshift-distributed-tracing
+Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
+Load_Operator_Deps jaeger openshift-distributed-tracing
 
 
 ##################
