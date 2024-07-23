@@ -7,18 +7,19 @@
 #               https://github.com/redhat-developer-demos/ossm-heading-to-production-and-day-2
 # Author : A.J.Amabile
 # Date   : 2024-July-19
-
+#
 #################
 # Functions     #
 #################
-
+#
 # Description: Test that an openshift object "name" of "type" exists and return
 # 0 for does not exist
 # 255 for object exists - also shows object status.phase
 # 99 for incorrect number of arguments
 # ------------------------------------------------------
+
 Test_object_exists() {
-if (( $# == 2 )); then
+  if (( $# == 2 )); then
     local obj_type=$1
     local obj_name=$2
     x=$(oc get ${obj_type} ${obj_name} -o template --template '{{.status.phase}}/{{.metadata.creationTimestamp}}' 2>/dev/null)
