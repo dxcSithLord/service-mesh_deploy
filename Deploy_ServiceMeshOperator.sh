@@ -53,12 +53,16 @@ Load_Operator_Deps() {
               oc create -f "${operator_name}_OperatorGroup.yaml"
               if (( $? == 0 )); then
                 oc apply -f "${operator_name}_Subscription.yaml"
+                if (( $? > 0 )); then
+                  echo "WARNING: Applying ${operator_name} Subscription had a problem, please check"
+                  exit 1
+                fi
               else
-                echo "WARNING: ${operator_name} Subscription had a problem, please check"
+                echo "WARNING: Creating ${operator_name} OperatorGroup had a problem, please check"
                 exit 1
               fi
             else
-              echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
+              echo "WARNING: Creating ${operator_name} service-account had a problem, please check"
               exit 1
             fi
           else
@@ -107,43 +111,7 @@ Load_Operator_Deps() {
 # else
   
 Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
-Load_Operator_Deps jaeger openshift-distributed-tracing
-
-
-##################
-### THE FOLLOWING CODE SHOULD BE REPLACED WITH THE LOAD_OPERATOR_NAME FUNCTION ABOVE - TO CHECK
-##################
-
-
-y=$(Test_object_exists namespace openshift-distributed-tracing)
-# if does not exists, then create
-case $? in 
-    0 )   
-    echo "Creating new objects" ;;
-    oc create ns openshift-distributed-tracing
-    oc apply -f jaeger-operator_service-account.yaml
-    oc create -f jaeger-operatorGroup.yaml
-    oc apply -f jaeger-operator_subscription.yaml
-  255 )   
-    echo "already there" ;;
-   99 )   
-    echo "wrong args" ;;
-      exit 1
-esac
-
-
-# check for existing service account and add if NOT found
-  oc get ServiceAccount -n openshift-operators-redhat elasticsearch-operator 2>/dev/null
-  (( $? > 0 )) && oc apply -f elasticsearch-operator_service-account.yaml
-  oc get OperatorGroup openshift-operators-redhat- -n openshift-operators-redhat
-
-# if does not exist, then create
-# else
-
-# check for existing service account and add if NOT found
-  oc get ServiceAccount jaeger-operator -n openshift-distributed-tracing 2>/dev/null
-  (( $? > 0 )) && oc apply -f elasticsearch-operator_service-account.yaml
-  oc get OperatorGroup openshift-operators-redhat- -n openshift-operators-redhat
+Load_Operator_Deps jaeger-operator openshift-distributed-tracing
 
 # if does not already exist
   oc apply -f kiali-operator_subscription.yaml
