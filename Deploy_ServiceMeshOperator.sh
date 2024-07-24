@@ -109,7 +109,7 @@ Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
 Load_Operator_Deps jaeger-operator openshift-distributed-tracing
 
 # if does not already exist
-  oc apply -f kiali-operator_subscription.yaml
+  oc apply -f kiali-ossm_subscription.yaml
 # if does not already exist
-  oc apply -f service-mesh_subscription.yaml
+  oc apply -f servicemeshoperator_Subscription.yaml
 
