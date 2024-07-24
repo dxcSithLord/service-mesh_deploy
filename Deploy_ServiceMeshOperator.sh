@@ -162,3 +162,4 @@ Load_Operator_Deps jaeger-operator openshift-distributed-tracing
 # if does not already exist
   oc apply -f servicemeshoperator_Subscription.yaml
 
+  verify_deployment  servicemeshoperator openshift-operators
