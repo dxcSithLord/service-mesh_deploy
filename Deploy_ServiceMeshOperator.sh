@@ -106,10 +106,23 @@ Load_Operator_Deps() {
 # else
   
 Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
+# test result
+# if setup OK, test for completed task
+#oc get subscription elasticsearch-operator -n openshift-operators-redhat -o template --template '{{.status.currentCSV}}'
+# returns the version "csv"
+#oc get csv elasticsearch-operator.v5.8.3 --no-headers
+# test for good result
+# oc get csv elasticsearch-operator.v5.8.3 -o template --template '{{.status.phase}}'
+# to show phase up to "Success"
 Load_Operator_Deps jaeger-operator openshift-distributed-tracing
+# test result
+# oc get subscription jaeger-product -n openshift-distributed-tracing -o template --template '{{.status.currentCSV}}'; echo
+# oc get csv jaeger-operator.v1.57.0-7 --no-headers
+# oc get csv jaeger-operator.v1.57.0-7 -o template --template '{{.status.phase}}'
+
 
 # if does not already exist
-  oc apply -f kiali-ossm_subscription.yaml
+  oc apply -f kiali-ossm_Subscription.yaml
 # if does not already exist
   oc apply -f servicemeshoperator_Subscription.yaml
 
