@@ -51,8 +51,8 @@ Load_Operator_Deps() {
           echo "Creating new objects"
           if oc create ns "${op_ns}"; then
             for obj in "${task_seq[@]}"; do
-              if oc "${obj_types[obj]}" -f "${operator_name}_${obj}.yaml";  then
-                echo "oc ${obj_types[obj]} -f ${operator_name}_${obj}.yaml OK"
+              if oc "${obj_types[${obj}]}" -f "${operator_name}_${obj}.yaml";  then
+                echo "oc ${obj_types[${obj}]} -f ${operator_name}_${obj}.yaml OK"
               else
                 echo "WARNING: Applying ${operator_name} ${obj} had a problem, please check"
                 exit 1
