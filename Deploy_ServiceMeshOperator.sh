@@ -35,6 +35,39 @@ Test_object_exists() {
   fi
 }
 
+verify_deployment() {
+  if (( $# == 2 )); then
+    local operator_name="${1}"
+    local op_ns="${2}"
+    # small delay tp allow commands to settle before checking
+    sleep 2
+    RESOURCE=$(oc get subscription \
+              "${operator_name}"   \
+              -n "${op_ns}" \
+              -o template --template '{{.status.currentCSV}}')
+    LOOP=1
+    while (( $LOOP )); do
+      sleep 5
+      # get the status of csv
+      STATUS=""
+      if oc get csv "${RESOURCE}" --no-headers 2>/dev/null; then
+          STATUS=$(oc get csv "${RESOURCE}" -o template --template '{{.status.phase}}')
+          RC=$?
+      fi
+      # Check the CSV state
+      if (( ${RC} == 0 )) && [[ "${STATUS}" == "Succeeded" ]]; then
+          echo "${operator_name} operator is deployed"
+          LOOP=0
+      else
+          echo "waiting for Succeeded state - currently ${STATUS}"
+      fi
+    done
+  else
+    echo "Incorrect number of arguments, operator_name and namespace expected"
+    return 99
+  fi
+}
+
 Load_Operator_Deps() {
   if (( $# == 2 )); then
     local operator_name="${1}"
@@ -60,7 +93,8 @@ Load_Operator_Deps() {
             done
           else
             echo "WARNING: Creating namespace ${op_ns} had problem"
-          fi;;
+            exit 1
+          fi ;;
       255 )   
         echo "already there"
           # Hence switch to the openshift-operators-redhat project namespace
@@ -101,11 +135,13 @@ Load_Operator_Deps() {
     echo "Incorrect number of arguments, operator_name and namespace expected"
     return 99
   fi
+  verify_deployment  "${operator_name}" "${op_ns]}"
 }  # end of Load_Operator_Deps
  
 # else
   
 Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
+
 # test result
 # if setup OK, test for completed task
 #oc get subscription elasticsearch-operator -n openshift-operators-redhat -o template --template '{{.status.currentCSV}}'
