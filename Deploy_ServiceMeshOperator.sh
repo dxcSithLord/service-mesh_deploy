@@ -45,8 +45,8 @@ Load_Operator_Deps() {
                             ["OperatorGroup"]="create" \
                             ["Subscription"]="apply" )
     # test for the if does not exists, then create
-
-    case $(Test_object_exists namespace "${op_ns}") in
+    Test_object_exists namespace "${op_ns}"
+    case $? in
         0 )   
           echo "Creating new objects"
           if oc create ns "${op_ns}"; then
