@@ -45,8 +45,8 @@ verify_deployment() {
               "${operator_name}"   \
               -n "${op_ns}" \
               -o template --template '{{.status.currentCSV}}')
-    LOOP=1
-    while (( $LOOP )); do
+    LOOP=1 # 1 evaluates to TRUE
+    while (( LOOP )); do
       sleep 5
       # get the status of csv
       STATUS=""
@@ -55,7 +55,7 @@ verify_deployment() {
           RC=$?
       fi
       # Check the CSV state
-      if (( ${RC} == 0 )) && [[ "${STATUS}" == "Succeeded" ]]; then
+      if (( RC == 0 )) && [[ "${STATUS}" == "Succeeded" ]]; then
           echo "${operator_name} operator is deployed"
           LOOP=0
       else
