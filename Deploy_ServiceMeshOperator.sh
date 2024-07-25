@@ -37,12 +37,13 @@ Test_object_exists() {
 }
 
 get_sa_name() {
-  if (( $# == 2 )); then
+  if (( $# == 3 )); then
     local operator_name="${1}"
     local op_ns="${2}"
-    sa_name=$(yp '.metadata.name' "${operator_name}_Subscription.yaml")
+    local obj_type="${3}"
+    sa_name=$(yp '.metadata.name' "${operator_name}_${obj_type}.yaml")
     if [[ -z "${sa_name}" ]]; then
-      echo "WARNING: Problem with ${operator_name}_Subscription.yaml - metadata.name missing"
+      echo "WARNING: Problem with ${operator_name}_${obj_type}.yaml - metadata.name missing"
       exit 1
     fi
     echo ${sa_name}
@@ -58,7 +59,7 @@ verify_deployment() {
     local RC
     # small delay tp allow commands to settle before checking
     sleep 2
-    sa_name=$(get_sa_name "${operator_name}" "${op_ns}")
+    sa_name=$(get_sa_name "${operator_name}" "${op_ns}" "Subscription")
     if (( $? == 0 )); then
       unset RESOURCE
       while [[ -z $RESOURCE ]]; do
@@ -131,11 +132,12 @@ Load_Operator_Deps() {
           #  to perform checks
           oc project "${op_ns}"
           #  work out the values to pass from the yaml file - needs yq installed.
-          sa_name=$(yq '.metadata.name' "${operator_name}_service-account.yaml")
+          get_sa_name "${operator_name}" "${os_ns}" "service-account"
+          
           if [[ ! -z ${sa_name} ]]; then
-          Test_object_exists ServiceAccount "${sa_name}"; then
-          case $? in
-            0 )
+            Test_object_exists ServiceAccount "${sa_name}"
+            case $? in
+              0 )
                 if oc apply -f "${operator_name}_service-account.yaml"; then
                   # get the number of existing OperatorGroups
                   op_groups=$(oc get OperatorGroup --no-headers -o json )
@@ -171,7 +173,8 @@ Load_Operator_Deps() {
                ;;
             esac
           else
-            echo "Well that didn't work"
+            echo "Well that didn't work - problem getting metadata.name"
+            exit 1
           fi ;;
        99 )   
         echo "wrong args"
