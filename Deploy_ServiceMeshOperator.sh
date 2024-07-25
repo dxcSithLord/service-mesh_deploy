@@ -7,6 +7,7 @@
 #               https://github.com/redhat-developer-demos/ossm-heading-to-production-and-day-2
 # Author : A.J.Amabile
 # Date   : 2024-July-19
+# Modified : Updated to handle error conditions and improve messages on progress.
 
 #################
 # Functions     #
@@ -35,31 +36,57 @@ Test_object_exists() {
   fi
 }
 
+get_sa_name() {
+  if (( $# == 2 )); then
+    local operator_name="${1}"
+    local op_ns="${2}"
+    sa_name=$(yp '.metadata.name' "${operator_name}_Subscription.yaml")
+    if [[ -z "${sa_name}" ]]; then
+      echo "WARNING: Problem with ${operator_name}_Subscription.yaml - metadata.name missing"
+      exit 1
+    fi
+    echo ${sa_name}
+}
+
 verify_deployment() {
   if (( $# == 2 )); then
     local operator_name="${1}"
     local op_ns="${2}"
+    local RESOURCE
+    local LOOP
+    local STATUS
+    local RC
     # small delay tp allow commands to settle before checking
     sleep 2
-    RESOURCE=$(oc get subscription \
-              "${operator_name}"   \
+    sa_name=$(get_sa_name "${operator_name}" "${op_ns}")
+    if (( $? == 0 )); then
+      unset RESOURCE
+      while [[ -z $RESOURCE ]]; do
+        RESOURCE=$(oc get subscription \
+              "${sa_name}"   \
               -n "${op_ns}" \
               -o template --template '{{.status.currentCSV}}')
+        echo "Waiting for ${sa_name} version"
+        sleep 10
+      done
+    else
+      exit 1
+    fi
     LOOP=1 # 1 evaluates to TRUE
     while (( LOOP )); do
       sleep 5
       # get the status of csv
       STATUS=""
       if oc get csv "${RESOURCE}" --no-headers 2>/dev/null; then
-          STATUS=$(oc get csv "${RESOURCE}" -o template --template '{{.status.phase}}')
-          RC=$?
+        STATUS=$(oc get csv "${RESOURCE}" -o template --template '{{.status.phase}}')
+        RC=$?
       fi
       # Check the CSV state
       if (( RC == 0 )) && [[ "${STATUS}" == "Succeeded" ]]; then
-          echo "${operator_name} operator is deployed"
-          LOOP=0
+        echo "${operator_name} operator is deployed"
+        LOOP=0
       else
-          echo "${operator_name} waiting for Succeeded state - currently ${STATUS}"
+        echo "${operator_name} waiting for Succeeded state - currently ${STATUS:-"BLANK"}"
       fi
     done
   else
@@ -142,24 +169,12 @@ Load_Operator_Deps() {
   
 Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
 
-# test result
-# if setup OK, test for completed task
-#oc get subscription elasticsearch-operator -n openshift-operators-redhat -o template --template '{{.status.currentCSV}}'
-# returns the version "csv"
-#oc get csv elasticsearch-operator.v5.8.3 --no-headers
-# test for good result
-# oc get csv elasticsearch-operator.v5.8.3 -o template --template '{{.status.phase}}'
-# to show phase up to "Success"
 Load_Operator_Deps jaeger-operator openshift-distributed-tracing
-# test result
-# oc get subscription jaeger-product -n openshift-distributed-tracing -o template --template '{{.status.currentCSV}}'; echo
-# oc get csv jaeger-operator.v1.57.0-7 --no-headers
-# oc get csv jaeger-operator.v1.57.0-7 -o template --template '{{.status.phase}}'
-
 
 # if does not already exist
   oc apply -f kiali-ossm_Subscription.yaml
+  verify_deployment kiali-ossm openshift-operators
+  
 # if does not already exist
   oc apply -f servicemeshoperator_Subscription.yaml
-
   verify_deployment  servicemeshoperator openshift-operators
