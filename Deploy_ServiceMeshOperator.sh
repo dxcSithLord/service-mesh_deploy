@@ -36,6 +36,7 @@ Test_object_exists() {
   fi
 }
 
+# Function to extract the metadata.name value from the operator yaml configuration file
 get_sa_name() {
   if (( $# == 3 )); then
     local operator_name="${1}"
@@ -49,6 +50,7 @@ get_sa_name() {
     echo ${sa_name}
 }
 
+# function to verify the deployment and monitor progress.
 verify_deployment() {
   if (( $# == 2 )); then
     local operator_name="${1}"
@@ -99,6 +101,8 @@ verify_deployment() {
   fi
 }
 
+# Function to load the dependencies of some operators in the order of 
+# a task sequence and a defined apply or create function for the task
 Load_Operator_Deps() {
   if (( $# == 2 )); then
     local operator_name="${1}"
@@ -187,16 +191,15 @@ Load_Operator_Deps() {
   verify_deployment  "${operator_name}" "${op_ns}"
 }  # end of Load_Operator_Deps
  
-# else
-  
+# MAIN CODE STARTS HERE
 Load_Operator_Deps elasticsearch-operator openshift-operators-redhat
-
 Load_Operator_Deps jaeger-operator openshift-distributed-tracing
 
-# if does not already exist
-  oc apply -f kiali-ossm_Subscription.yaml
-  verify_deployment kiali-ossm openshift-operators
+# no pre-requisites and doesn't matter if they already exist
+oc apply -f kiali-ossm_Subscription.yaml
+verify_deployment kiali-ossm openshift-operators
   
-# if does not already exist
-  oc apply -f servicemeshoperator_Subscription.yaml
-  verify_deployment  servicemeshoperator openshift-operators
+# no pre-requisites and doesn't matter if they already exist
+oc apply -f servicemeshoperator_Subscription.yaml
+verify_deployment  servicemeshoperator openshift-operators
+echo "Completed at $(date)"
