@@ -48,6 +48,10 @@ get_sa_name() {
       exit 1
     fi
     echo "${sa_name}"
+  else
+    echo "Incorrect numer of arguments - three expected for get_sa_name"
+    exit 99
+  fi
 }
 
 # function to verify the deployment and monitor progress.
