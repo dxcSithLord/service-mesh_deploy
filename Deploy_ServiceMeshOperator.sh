@@ -59,7 +59,7 @@ verify_deployment() {
           echo "${operator_name} operator is deployed"
           LOOP=0
       else
-          echo "waiting for Succeeded state - currently ${STATUS}"
+          echo "${operator_name} waiting for Succeeded state - currently ${STATUS}"
       fi
     done
   else
