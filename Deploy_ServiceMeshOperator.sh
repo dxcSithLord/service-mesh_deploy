@@ -80,6 +80,9 @@ verify_deployment() {
       if oc get csv "${RESOURCE}" --no-headers 2>/dev/null; then
         STATUS=$(oc get csv "${RESOURCE}" -o template --template '{{.status.phase}}')
         RC=$?
+      else
+        echo "Problem getting CSV for ${RESOURCE}"
+        exit 1
       fi
       # Check the CSV state
       if (( RC == 0 )) && [[ "${STATUS}" == "Succeeded" ]]; then
@@ -129,28 +132,44 @@ Load_Operator_Deps() {
           oc project "${op_ns}"
           #  work out the values to pass from the yaml file - needs yq installed.
           sa_name=$(yq '.metadata.name' "${operator_name}_service-account.yaml")
-          if Test_object_exists ServiceAccount "${sa_name}"; then
-            # True is does NOT exist
-            if oc apply -f "${operator_name}_service-account.yaml"; then
-              # get the number of existing OperatorGroups
-              op_groups=$(oc get OperatorGroup --no-headers -o json )
-              if (( $? == 0 && $(echo "$op_groups" | jq '.items | length' ) == 0 )); then
-                # if none found and OK to create
-                if oc create -f "${operator_name}_OperatorGroup.yaml"; then
-                  oc apply -f "${operator_name}_Subscription.yaml"
+          if [[ ! -z ${sa_name} ]]; then
+          Test_object_exists ServiceAccount "${sa_name}"; then
+          case $? in
+            0 )
+                if oc apply -f "${operator_name}_service-account.yaml"; then
+                  # get the number of existing OperatorGroups
+                  op_groups=$(oc get OperatorGroup --no-headers -o json )
+                  if (( $? == 0 && $(echo "$op_groups" | jq '.items | length' ) == 0 )); then
+                    # if none found and OK to create
+                    if oc create -f "${operator_name}_OperatorGroup.yaml"; then
+                      echo "oc create -f ${operator_name}_OperatorGroup.yaml OK"
+                      if oc apply -f "${operator_name}_Subscription.yaml"; then
+                        echo "oc apply -f ${operator_name}_Subscription.yaml OK"
+                      else
+                        echo "WARNING: ${operator_name} Subscription had a problem, please check"  
+                        exit 1
+                      fi
+                    else
+                      echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
+                      exit 1
+                    fi
+                  else
+                    # Operator groups exist, so list them and exit
+                    echo "Operator groups exist - please verify openshift-operators-redhat-* exists"
+                    echo "$op_groups" | jq '.items'
+                  fi
                 else
-                  echo "WARNING: ${operator_name} Subscription had a problem, please check"
+                  echo "WARNING: ${operator_name} service-account had a problem, please check"
                   exit 1
                 fi
-              else
-                # Operator groups exist, so list them and exit
-                echo "Operator groups exist - please verify openshift-operators-redhat-* exists"
-                echo "$op_groups" | jq '.items'
-              fi
-            else
-              echo "WARNING: ${operator_name} OperatorGroup had a problem, please check"
-              exit 1
-            fi
+                ;;
+              255 )
+                  echo "Service account ${sa_name} exists"
+                ;;
+              99 )
+                  echo "Wrong number of arguments Testing serviceAccount name"
+               ;;
+            esac
           else
             echo "Well that didn't work"
           fi ;;
