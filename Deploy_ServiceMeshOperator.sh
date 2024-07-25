@@ -42,7 +42,7 @@ get_sa_name() {
     local operator_name="${1}"
     local op_ns="${2}"
     local obj_type="${3}"
-    sa_name=$(yp '.metadata.name' "${operator_name}_${obj_type}.yaml")
+    sa_name=$(yq '.metadata.name' "${operator_name}_${obj_type}.yaml")
     if [[ -z "${sa_name}" ]]; then
       echo "WARNING: Problem with ${operator_name}_${obj_type}.yaml - metadata.name missing"
       exit 1
