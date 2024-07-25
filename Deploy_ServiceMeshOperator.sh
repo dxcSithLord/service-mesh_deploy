@@ -135,7 +135,7 @@ Load_Operator_Deps() {
     echo "Incorrect number of arguments, operator_name and namespace expected"
     return 99
   fi
-  verify_deployment  "${operator_name}" "${op_ns]}"
+  verify_deployment  "${operator_name}" "${op_ns}"
 }  # end of Load_Operator_Deps
  
 # else
