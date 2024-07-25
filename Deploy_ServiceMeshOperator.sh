@@ -47,7 +47,7 @@ get_sa_name() {
       echo "WARNING: Problem with ${operator_name}_${obj_type}.yaml - metadata.name missing"
       exit 1
     fi
-    echo ${sa_name}
+    echo "${sa_name}"
 }
 
 # function to verify the deployment and monitor progress.
