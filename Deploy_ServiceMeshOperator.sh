@@ -68,7 +68,7 @@ verify_deployment() {
     sa_name=$(get_sa_name "${operator_name}" "${op_ns}" "Subscription")
     if (( $? == 0 )); then
       unset RESOURCE
-      while [[ -z $RESOURCE ]]; do
+      while [[ -z $RESOURCE && "${RESOURCE}" != "<no value>" ]]; do
         RESOURCE=$(oc get subscription \
               "${sa_name}"   \
               -n "${op_ns}" \
