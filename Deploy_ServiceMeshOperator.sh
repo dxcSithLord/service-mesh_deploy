@@ -1,6 +1,6 @@
 #!/bin/bash -f
 # Description : This script installs the dependencies for Red Hat Openshift Service Mesh
-#               and then servicemesh operators.
+#               and then service mesh operators.
 #               Content based on content from 
 #               https://github.com/jtarte/service-mesh/tree/master
 #               and 
@@ -28,7 +28,7 @@ Test_object_exists() {
     (( $? == 0 )) && \
       echo "Object name '${obj_name}' of object type '${obj_type}' already exists - state/Created=${x}" && \
       return 255 || \
-      echo "Object name '${obj_name}' of object type '${obj_type}'does not exist in '$(oc project -q)'" && \
+      echo "Object name '${obj_name}' of object type '${obj_type}' does not exist in '$(oc project -q)'" && \
       return 0
   else
     echo "Incorrect number of arguments, object_type and object_name expected"
@@ -49,7 +49,7 @@ get_sa_name() {
     fi
     echo "${sa_name}"
   else
-    echo "Incorrect numer of arguments - three expected for get_sa_name"
+    echo "Incorrect number of arguments - three expected for get_sa_name"
     exit 99
   fi
 }
@@ -68,7 +68,8 @@ verify_deployment() {
     sa_name=$(get_sa_name "${operator_name}" "${op_ns}" "Subscription")
     if (( $? == 0 )); then
       unset RESOURCE
-      while [[ -z $RESOURCE && "${RESOURCE}" != "<no value>" ]]; do
+      # while CSV valid value not there yet
+      while [[ -z $RESOURCE || "${RESOURCE}" == "<no value>" ]]; do
         RESOURCE=$(oc get subscription \
               "${sa_name}"   \
               -n "${op_ns}" \
@@ -140,9 +141,9 @@ Load_Operator_Deps() {
           #  to perform checks
           oc project "${op_ns}"
           #  work out the values to pass from the yaml file - needs yq installed.
-          get_sa_name "${operator_name}" "${os_ns}" "service-account"
+          get_sa_name "${operator_name}" "${op_ns}" "service-account"
           
-          if [[ ! -z ${sa_name} ]]; then
+          if [[ -n ${sa_name} ]]; then
             Test_object_exists ServiceAccount "${sa_name}"
             case $? in
               0 )
