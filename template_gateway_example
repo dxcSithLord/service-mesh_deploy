@@ -1,0 +1,19 @@
+kind: Gateway
+apiVersion: networking.istio.io/v1beta1
+metadata:
+  name: CHANG-ME <------ ######## CHANGE ME
+  namespace: <APPLICATION NAMESPACE> <----- ####### CHANGE ME
+spec:
+  servers:
+    - port:
+        number: 443
+        protocol: HTTPS
+        name: https
+      hosts:
+        - ext.hostname.tld  <----- ###### CHANGE ME
+      tls:
+        mode: SIMPLE
+        credentialName: <NAME OF SECRET CONTAINING CERT>  <----- ####### CHANGE ME
+  selector:
+    istio: ingressgateway
+status: {}
