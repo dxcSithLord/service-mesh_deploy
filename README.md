@@ -8,3 +8,5 @@ bash ./Deploy_ServiceMeshOperator.sh
 and wait for install.  It may be a few minutes.
 
 See also https://github.com/dxcSithLord/ossm-heading-to-production-and-day-2/tree/main/scenario-3-prod-basic-setup/scripts
+
+check issues
