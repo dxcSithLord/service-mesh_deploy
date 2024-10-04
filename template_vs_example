@@ -1,0 +1,19 @@
+kind: VirtualService
+apiVersion: networking.istio.io/v1beta1
+metadata:
+  name: <VS NAME> <---- ##### CHANGEME
+  namespace: <APPLICATION NAMESPACE>  <----- ##### CHANGEME
+spec:
+  hosts:
+    - <EXT HOST NAME> <----- ##### CHANGEME 
+  gateways:
+    - < NAME OF GW> <---- ##### CHANGEME
+  http:
+    - match:
+        - uri:
+            exact: /
+      route:
+        - destination:
+            host: <SERVICE NAME (Openshift service name, linking from pods>  <----- ##### CHANGE ME
+            port:
+              number: 8080 <----- ##### CHANGE ME TO MATCH SERVICE PORT (http)  
