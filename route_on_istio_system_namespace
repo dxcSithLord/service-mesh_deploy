@@ -1,0 +1,17 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: ords <----- ###### CHANGE ME
+  namespace: istio-system
+spec:
+  host: <INSERT_EXT_HOSTNAME_OF_APP> <------ ####### CHANGE ME
+  to:
+    kind: Service
+    name: istio-ingressgateway
+    weight: 100
+  port:
+    targetPort: https
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
